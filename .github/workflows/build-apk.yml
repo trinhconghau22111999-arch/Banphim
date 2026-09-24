@@ -12,6 +12,8 @@ jobs:
   build:
     name: Build debug + release APK
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
 
     steps:
       - name: Checkout
@@ -74,7 +76,7 @@ jobs:
       # If these secrets are not set, this step and signing are skipped
       # and the release build falls back to the debug key automatically.
       - name: Decode release keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
         run: |
           mkdir -p keystore
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore/key.qr.banphim.jks

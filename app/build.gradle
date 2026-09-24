@@ -1,0 +1,107 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// --- Release signing config -------------------------------------------
+// Reads signing info from (in priority order):
+//   1. Environment variables (used by .github/workflows/build-apk.yml / CI)
+//   2. keystore.properties at the project root (local dev only - this file
+//      is git-ignored, see .gitignore and README.md "Ký ứng dụng")
+// If neither is present, the release build falls back to the debug key so
+// `./gradlew assembleRelease` never breaks on a fresh checkout.
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+def envOrProp = { String envName, String propName ->
+    System.getenv(envName) ?: keystoreProps.getProperty(propName)
+}
+def releaseStoreFilePath = envOrProp("KEYSTORE_FILE", "storeFile")
+def releaseStorePassword = envOrProp("KEYSTORE_PASSWORD", "storePassword")
+def releaseKeyAlias       = envOrProp("KEY_ALIAS", "keyAlias")
+def releaseKeyPassword    = envOrProp("KEY_PASSWORD", "keyPassword")
+def hasReleaseSigning = releaseStoreFilePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
+// --- Auto-incrementing version --------------------------------------
+// CI passes -PappVersionCode=<n> -PappVersionName=<x.y.z> (see
+// .github/workflows/build-apk.yml, driven by ${{ github.run_number }},
+// which increases by 1 on every workflow run and never resets). A local
+// `./gradlew assembleDebug` with no such properties just falls back to
+// versionCode 1 / "1.0-dev" so local builds still work.
+def buildVersionCode = project.hasProperty('appVersionCode') ? (project.property('appVersionCode') as Integer) : 1
+def buildVersionName = project.hasProperty('appVersionName') ? project.property('appVersionName') : "1.0-dev"
+
+android {
+    namespace 'com.example.qrkeyboardnative'
+    compileSdk 34
+    ndkVersion "26.1.10909125"
+
+    defaultConfig {
+        applicationId "com.example.qrkeyboardnative"
+        // Camera2 NDK (camera2ndk / mediandk) requires API 24+.
+        minSdk 24
+        targetSdk 34
+        versionCode buildVersionCode
+        versionName buildVersionName
+
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags '-std=c++17 -Wall'
+                arguments '-DANDROID_STL=c++_shared'
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile rootProject.file(releaseStoreFilePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Uses the real "key.qr.banphim" release keystore when
+            // available (CI secrets or local keystore.properties);
+            // otherwise falls back to the debug key so the build never
+            // breaks on a fresh checkout with no signing set up yet.
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        viewBinding false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}

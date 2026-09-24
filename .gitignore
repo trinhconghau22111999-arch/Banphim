@@ -1,0 +1,15 @@
+# Build output
+/build/
+/app/build/
+/.gradle/
+/local.properties
+/.idea/
+/.cxx/
+*.iml
+
+# Signing secrets - NEVER commit these to a public repo.
+# The keystore itself lives in keystore/ locally and as a GitHub Secret
+# (base64) for CI - see README.md "Ký ứng dụng (signing)".
+keystore/*.jks
+keystore/*.keystore
+keystore.properties

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:extractNativeLibs="true">
+
+        <!--
+          Required Android glue (cannot be avoided): a launcher Activity that
+          points the user to the system keyboard settings, exactly like the
+          original app's MainActivity. All real logic lives in native C/C++.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Required Android glue: hosts the camera preview Surface and
+          requests the CAMERA runtime permission (only an Activity can do
+          this). All capture/decoding logic is native - see cpp/camera.cpp.
+        -->
+        <activity
+            android:name=".QrScanActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme"
+            android:screenOrientation="portrait" />
+
+        <!--
+          Required Android glue: Android will only ever instantiate an IME by
+          looking up a Service subclass of android.inputmethodservice.InputMethodService
+          declared here. There is no NDK/native entry point for this - the OS
+          binds to this class directly. Every method body below is a one-line
+          call into native C/C++ (see cpp/jni_bridge.cpp) - no keyboard logic,
+          drawing, camera or QR handling is implemented in Kotlin.
+        -->
+        <service
+            android:name=".QrKeyboardService"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+
+    </application>
+</manifest>

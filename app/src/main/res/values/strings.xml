@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">QR Keyboard Native</string>
+    <string name="open_settings">Mở cài đặt bàn phím</string>
+    <string name="instructions">1. Bấm nút bên dưới để mở Cài đặt bàn phím.\n2. Bật \"QR Keyboard Native\".\n3. Chọn bàn phím này trong bất kỳ ô nhập liệu nào.\n4. Bấm nút [QR] trên bàn phím để quét và tự động chèn nội dung.</string>
+</resources>

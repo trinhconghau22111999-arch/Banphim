@@ -32,8 +32,11 @@ static void stroke_rect(ANativeWindow_Buffer *buf, int x0, int y0, int x1, int y
 // Draws one glyph, scaled, top-left at (x,y). Uses the classic Adafruit
 // 5x7 column-major bitmap font (5 bytes/char, bit0=top .. bit6=bottom).
 static void draw_char(ANativeWindow_Buffer *buf, int x, int y, char ch, int scale, px_t c) {
-    if (ch < 0x20 || ch > 0x7E) return;
-    const uint8_t *glyph = &font[(ch - 0x20) * 5];
+    unsigned char uc = (unsigned char)ch;
+    if (uc < 0x20 || uc > 0x7E) return;
+    // font5x7.h is the full 256-glyph Adafruit table (starts at code 0x00),
+    // so index by the raw char code -- do NOT subtract 0x20.
+    const uint8_t *glyph = &font[uc * 5];
     for (int col = 0; col < 5; col++) {
         uint8_t bits = glyph[col];
         for (int row = 0; row < 7; row++) {

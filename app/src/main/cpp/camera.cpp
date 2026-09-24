@@ -135,6 +135,7 @@ int camera_start(ANativeWindow *preview_window, qr_result_cb on_result,
     ACameraIdList *idList = nullptr;
     if (ACameraManager_getCameraIdList(g.manager, &idList) != ACAMERA_OK || idList->numCameras == 0) {
         fail("no_camera_found");
+        if (idList) ACameraManager_deleteCameraIdList(idList);
         return -1;
     }
 

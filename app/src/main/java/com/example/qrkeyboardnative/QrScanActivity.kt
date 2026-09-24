@@ -36,6 +36,7 @@ class QrScanActivity : Activity() {
 
     private var surfaceReady = false
     private var permissionGranted = false
+    private var savedHolder: SurfaceHolder? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +47,13 @@ class QrScanActivity : Activity() {
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 surfaceReady = true
+                savedHolder = holder
                 maybeStartCamera(holder)
             }
             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
             override fun surfaceDestroyed(holder: SurfaceHolder) {
                 surfaceReady = false
+                savedHolder = null
                 nativeStopCamera()
             }
         })
@@ -81,7 +84,7 @@ class QrScanActivity : Activity() {
 
     private fun maybeStartCamera(holder: SurfaceHolder?) {
         if (!permissionGranted || !surfaceReady) return
-        val surface = holder?.surface ?: return
+        val surface = (holder ?: savedHolder)?.surface ?: return
         nativeStartCamera(surface)
     }
 

@@ -98,6 +98,13 @@ Java_com_example_qrkeyboardnative_QrKeyboardService_nativeSurfaceChanged(
     std::lock_guard<std::mutex> lock(g_kbMutex);
     if (g_kbWindow) { ANativeWindow_release(g_kbWindow); g_kbWindow = nullptr; }
     g_kbWindow = ANativeWindow_fromSurface(env, surface);
+    // renderer.c writes raw 4-byte RGBA_8888 pixels directly into the
+    // buffer; the Surface's default format is not guaranteed to be
+    // RGBA_8888 on every device (some default to RGB_565 / 2 bytes per
+    // pixel), which would corrupt memory past the real buffer bounds.
+    // Force the format explicitly so ANativeWindow_lock() always hands
+    // back a 4-byte-per-pixel buffer matching what renderer.c expects.
+    ANativeWindow_setBuffersGeometry(g_kbWindow, width, height, WINDOW_FORMAT_RGBA_8888);
     kb_layout(&g_kb, (float)width, (float)height);
     redraw();
 }
